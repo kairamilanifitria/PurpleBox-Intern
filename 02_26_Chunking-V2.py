@@ -8,10 +8,7 @@ with open("/content/drive/MyDrive/document_rag/md/17.md", "r") as file:
     markdown_text = file.read()
 
 # Step 1: Document-Specific Chunking
-headers_to_split_on = [
-    ("#", "Header 1"),
-    ("##", "Header 2")
-]
+headers_to_split_on = [("#", "Header 1"), ("##", "Header 2")]
 splitter = MarkdownHeaderTextSplitter(headers_to_split_on=headers_to_split_on, strip_headers=False)
 documents = splitter.split_text(markdown_text)
 chunks = [doc.page_content for doc in documents]
@@ -20,109 +17,78 @@ chunks = [doc.page_content for doc in documents]
 model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
 def is_table(chunk):
-    """Check if a chunk contains a Markdown table."""
     return "|" in chunk and "---" in chunk
 
-def get_table_header(table_text):
-    """Extract the header row of a Markdown table."""
-    lines = table_text.strip().split("\n")
-    header, separator = None, None
-    for i in range(len(lines) - 1):
-        if "---" in lines[i]:  # Identify separator line
-            header = lines[i - 1]  # Header is right above separator
-            separator = lines[i]  # Capture the separator
-            break
-    return header, separator
-
 def split_long_table(table_text, max_tokens=300):
-    """Splits long Markdown tables while keeping the first chunk unchanged and repeating headers in later chunks."""
     lines = table_text.strip().split("\n")
-
-    # Identify table header and separator
     header, separator = None, None
     for i, line in enumerate(lines):
-        if "---" in line and "|" in line:  # Detect table separator
-            header = lines[i - 1]  # The row before separator is the header
-            separator = line
+        if "---" in line and "|" in line:
+            header, separator = lines[i - 1], line
             break
-
     if not header or not separator:
-        return [table_text]  # Return unchanged if it's not a valid table
-
-    split_tables = []
-    temp_chunk = []
-    first_chunk = True  # Track the first occurrence of the table
-
+        return [table_text]
+    
+    split_tables, temp_chunk, first_chunk = [], [], True
     for line in lines:
         if first_chunk:
             temp_chunk.append(line)
             if len(" ".join(temp_chunk).split()) > max_tokens:
                 split_tables.append("\n".join(temp_chunk))
-                temp_chunk = []
-                first_chunk = False  # Mark first chunk as processed
+                temp_chunk, first_chunk = [], False
             continue
-
-        # Add table header only in subsequent chunks
+        
         if not temp_chunk:
-            temp_chunk.append(header)
-            temp_chunk.append(separator)
-
+            temp_chunk.extend([header, separator])
         temp_chunk.append(line)
-
-        # If exceeding token limit, store the chunk
+        
         if len(" ".join(temp_chunk).split()) > max_tokens:
             split_tables.append("\n".join(temp_chunk))
-            temp_chunk = []  # Start a new chunk
-
-    # Append remaining chunk
+            temp_chunk = []
+    
     if temp_chunk:
         split_tables.append("\n".join(temp_chunk))
-
+    
     return split_tables
 
-
 def needs_semantic_chunking(chunk, max_tokens=300):
-    """Check if a non-table chunk needs further splitting."""
     return not is_table(chunk) and len(chunk.split()) > max_tokens
 
-def semantic_split(text, max_sentences=5, similarity_threshold=0.6):
-    """Splits long text semantically using sentence embeddings."""
+def semantic_split(text, max_sentences=5, similarity_threshold=0.6, min_tokens=100):
     sentences = re.split(r'(?<=[.!?])\s+', text)
-
     if len(sentences) <= max_sentences:
         return [text]
-
+    
     embeddings = model.encode(sentences, convert_to_tensor=True)
     similarities = torch.nn.functional.cosine_similarity(embeddings[:-1], embeddings[1:], dim=1)
-
     split_points = [i+1 for i, sim in enumerate(similarities) if sim < similarity_threshold]
-
+    
     sub_chunks, start = [], 0
     for split in split_points:
         chunk_text = " ".join(sentences[start:split])
-        if len(chunk_text.split()) >= 10:
+        if len(chunk_text.split()) >= min_tokens:
             sub_chunks.append(chunk_text)
         start = split
-
-    sub_chunks.append(" ".join(sentences[start:]))
-    return [c for c in sub_chunks if len(c.split()) >= 10]
+    
+    last_chunk = " ".join(sentences[start:])
+    if len(last_chunk.split()) >= min_tokens:
+        sub_chunks.append(last_chunk)
+    elif sub_chunks:
+        sub_chunks[-1] += " " + last_chunk  # Merge with previous if too short
+    
+    return sub_chunks if sub_chunks else [text]
 
 def is_references_section(chunk):
-    """Check if a chunk is part of the References section."""
     return chunk.strip().lower().startswith("## references")
 
-
-# Step 3: Apply Chunking
 # Step 3: Apply Chunking
 final_chunks = []
-is_references = False  # Track if we are inside the references section
-
+is_references = False
 for chunk in chunks:
     if is_references_section(chunk):
-        is_references = True  # Mark that we are in the References section
-
+        is_references = True
     if is_references:
-        final_chunks.append(chunk)  # Keep References intact
+        final_chunks.append(chunk)
     elif is_table(chunk):
         final_chunks.extend(split_long_table(chunk))
     elif needs_semantic_chunking(chunk):
@@ -130,18 +96,14 @@ for chunk in chunks:
     else:
         final_chunks.append(chunk)
 
-# Step 4: Ensure Image Descriptions Stick Together (Sliding Window)
+# Step 4: Merge Small Chunks (Ensure Minimum 100 Tokens)
 merged_chunks = []
 i = 0
 while i < len(final_chunks):
     chunk = final_chunks[i]
-
-    if "![Image](" in chunk and i + 1 < len(final_chunks):
-        next_chunk = final_chunks[i + 1]
-        if len(next_chunk.split()) < 50:  # Merge small description chunks
-            chunk += "\n" + next_chunk
-            i += 1  # Skip next chunk as it's merged
-
+    while i + 1 < len(final_chunks) and len(chunk.split()) < 100:
+        chunk += "\n" + final_chunks[i + 1]
+        i += 1
     merged_chunks.append(chunk)
     i += 1
 
