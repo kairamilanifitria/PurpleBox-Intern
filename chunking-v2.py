@@ -23,13 +23,13 @@ def extract_and_split_table(chunk, max_rows=10):
             row_data = line.strip("|").split("|")
             row_data = [cell.strip() for cell in row_data]
             table_rows.append(row_data)
-    
+
     # Split table into chunks if too many rows
     table_chunks = []
     for i in range(0, len(table_rows), max_rows):
         chunk_rows = table_rows[i:i + max_rows]
         table_chunks.append({"headers": header, "rows": chunk_rows})
-    
+
     return table_chunks if header and table_rows else None
 
 # Function to extract section headers
@@ -38,13 +38,16 @@ def extract_section_title(header):
     return match.group(2) if match else None
 
 # Function to split text into chunks of max 400 words with 40-word overlap
-def split_text(text, max_words=400, overlap=40):
+def split_text(text, section_title, max_words=400, overlap=40):
     words = text.split()
     chunks = []
     start = 0
     while start < len(words):
         end = min(start + max_words, len(words))
         chunk = " ".join(words[start:end])
+        # Prepend section title to first chunk
+        if start == 0:
+            chunk = f"## {section_title}\n{chunk}"
         chunks.append(chunk)
         start += max_words - overlap
     return chunks
@@ -53,15 +56,17 @@ def split_text(text, max_words=400, overlap=40):
 sections = re.split(r'^(#+\s+.*)', markdown_text, flags=re.MULTILINE)
 final_chunks = []
 current_section = "Unknown"
+chunk_id = 1  # Initialize chunk counter
 
 for i in range(1, len(sections), 2):
     section_title = extract_section_title(sections[i]) or current_section
     content = sections[i + 1].strip()
     current_section = section_title  # Update current section to maintain hierarchy
-    
+
     # Extract tables and preserve order
     table_matches = list(re.finditer(r'(\|.*\|\n\|[-| ]+\|\n(?:\|.*\|\n)+)', content, re.MULTILINE))
     last_index = 0
+    position = 1  # Initialize position counter for metadata
 
     for match in table_matches:
         start, end = match.span()
@@ -70,21 +75,51 @@ for i in range(1, len(sections), 2):
         last_index = end
 
         if pre_table_text:
-            text_chunks = split_text(pre_table_text)
+            text_chunks = split_text(pre_table_text, section_title)
             for chunk in text_chunks:
-                final_chunks.append({"content": chunk, "section": section_title})
+                final_chunks.append({
+                    "chunk_id": chunk_id,
+                    "content": chunk,
+                    "metadata": {
+                        "source": "PDF1.md",
+                        "section": section_title,
+                        "position": position
+                    }
+                })
+                chunk_id += 1
+                position += 1
 
         table_chunks = extract_and_split_table(table_text)
         if table_chunks:
             for table_chunk in table_chunks:
-                final_chunks.append({"table": table_chunk, "section": section_title})
+                final_chunks.append({
+                    "chunk_id": chunk_id,
+                    "table": table_chunk,
+                    "metadata": {
+                        "source": "PDF1.md",
+                        "section": section_title,
+                        "position": position
+                    }
+                })
+                chunk_id += 1
+                position += 1
 
     # Handle remaining text after the last table
     remaining_text = content[last_index:].strip()
     if remaining_text:
-        text_chunks = split_text(remaining_text)
+        text_chunks = split_text(remaining_text, section_title)
         for chunk in text_chunks:
-            final_chunks.append({"content": chunk, "section": section_title})
+            final_chunks.append({
+                "chunk_id": chunk_id,
+                "content": chunk,
+                "metadata": {
+                    "source": "PDF1.md",
+                    "section": section_title,
+                    "position": position
+                }
+            })
+            chunk_id += 1
+            position += 1
 
 # Save JSON output
 output_file = "/content/PDF1.json"
