@@ -1,8 +1,10 @@
 import json
 import re
+import os
 
 # Load Markdown file
 file_path = "/content/drive/MyDrive/document_rag/md/PDF1.md"
+file_name = os.path.basename(file_path)
 with open(file_path, "r", encoding="utf-8") as file:
     markdown_text = file.read()
 
@@ -37,6 +39,13 @@ def extract_section_title(header):
     match = re.match(r'^(#+)\s+(.*)', header.strip())
     return match.group(2) if match else None
 
+# Function to detect table title
+def detect_table_title(pre_table_text):
+    lines = pre_table_text.strip().split("\n")
+    if lines and len(lines[-1].split()) < 10:  # Assuming a title is a short line before a table
+        return lines[-1]
+    return None
+
 # Function to split text into chunks of max 400 words with 40-word overlap
 def split_text(text, section_title, max_words=400, overlap=40):
     words = text.split()
@@ -56,17 +65,15 @@ def split_text(text, section_title, max_words=400, overlap=40):
 sections = re.split(r'^(#+\s+.*)', markdown_text, flags=re.MULTILINE)
 final_chunks = []
 current_section = "Unknown"
-chunk_id = 1  # Initialize chunk counter
+chunk_id = 1
 
 for i in range(1, len(sections), 2):
     section_title = extract_section_title(sections[i]) or current_section
     content = sections[i + 1].strip()
     current_section = section_title  # Update current section to maintain hierarchy
 
-    # Extract tables and preserve order
     table_matches = list(re.finditer(r'(\|.*\|\n\|[-| ]+\|\n(?:\|.*\|\n)+)', content, re.MULTILINE))
     last_index = 0
-    position = 1  # Initialize position counter for metadata
 
     for match in table_matches:
         start, end = match.span()
@@ -74,6 +81,7 @@ for i in range(1, len(sections), 2):
         table_text = match.group(0)
         last_index = end
 
+        table_title = detect_table_title(pre_table_text)  # Extract table title if present
         if pre_table_text:
             text_chunks = split_text(pre_table_text, section_title)
             for chunk in text_chunks:
@@ -81,13 +89,12 @@ for i in range(1, len(sections), 2):
                     "chunk_id": chunk_id,
                     "content": chunk,
                     "metadata": {
-                        "source": "PDF1.md",
+                        "source": file_name,
                         "section": section_title,
-                        "position": position
+                        "position": chunk_id
                     }
                 })
                 chunk_id += 1
-                position += 1
 
         table_chunks = extract_and_split_table(table_text)
         if table_chunks:
@@ -96,15 +103,14 @@ for i in range(1, len(sections), 2):
                     "chunk_id": chunk_id,
                     "table": table_chunk,
                     "metadata": {
-                        "source": "PDF1.md",
+                        "source": file_name,
                         "section": section_title,
-                        "position": position
+                        "table_title": table_title,
+                        "position": chunk_id
                     }
                 })
                 chunk_id += 1
-                position += 1
 
-    # Handle remaining text after the last table
     remaining_text = content[last_index:].strip()
     if remaining_text:
         text_chunks = split_text(remaining_text, section_title)
@@ -113,13 +119,12 @@ for i in range(1, len(sections), 2):
                 "chunk_id": chunk_id,
                 "content": chunk,
                 "metadata": {
-                    "source": "PDF1.md",
+                    "source": file_name,
                     "section": section_title,
-                    "position": position
+                    "position": chunk_id
                 }
             })
             chunk_id += 1
-            position += 1
 
 # Save JSON output
 output_file = "/content/PDF1.json"
