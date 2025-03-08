@@ -131,4 +131,4 @@ output_file = "/content/PDF1.json"
 with open(output_file, "w", encoding="utf-8") as json_file:
     json.dump(final_chunks, json_file, indent=4, ensure_ascii=False)
 
-print(f"Chunking completed. JSON saved to: {output_file}")
+print(f"Chunking completed. JSON saved to: {output_file}") 
