@@ -1,0 +1,8 @@
+llama-index==0.12.25
+llama-index-core==0.12.25
+llama-index-node-parser-docling==0.3.1
+llama-index-readers-docling==0.3.2
+pypdf2>=3.0.1
+easyocr>=1.7.2
+torch
+# use python 3.12.9 (fewer than 3.13) to avoid fails in import module "llama-index-readers-docling". 
