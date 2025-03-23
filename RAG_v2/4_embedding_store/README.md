@@ -27,6 +27,6 @@ description : text
 1. install the requirements.txt first in your environment
 2. fill the .env supabase url and the API key
 3. make sure the input and output folder in the same folder as code and other dependencies
-4. If the env supports GPU, make sure install the PyTorch with the correct CUDA version. (my sistem supports system supports CUDA 12.5, so i run this "**pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121**")
-5. if find some error while loading the model, make sure to test your env supported GPU or not, by running the "test.py" first. Expected result : "CUDA Available: True" "GPU Name: NVIDIA GeForce RTX 3050" if you have GPU but its not detected, run "nvidia-smi" in the cmd first
-6. the code also can be run in the CPU, but it may takes longer time to process
+4. If the venv supports GPU, make sure install the PyTorch with the correct CUDA version. (my system supports CUDA 12.5, so i run this "**pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121**")
+5. if find some error while loading the model, make sure to test your env supported GPU or not, by running the "test.py" first. Expected result : "CUDA Available: True" "GPU Name: NVIDIA GeForce RTX 3050". if you have GPU but its not detected, run "nvidia-smi" in the cmd first
+6. the code also can be run in the CPU
