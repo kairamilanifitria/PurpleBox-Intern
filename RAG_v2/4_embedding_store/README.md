@@ -27,7 +27,7 @@ Disable RLS -> Confirm```
 1. install the ```requirements.txt``` first in your environment
 2. fill the ```.env``` supabase url and the API key
 3. make sure the input and output folder in the same folder as code and other dependencies
-4. If the venv supports GPU, make sure install the PyTorch with the correct CUDA version. (my system supports CUDA 12.5, so i run this ```**pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121**```)
+4. If the venv supports GPU, make sure install the PyTorch with the correct CUDA version. (my system supports CUDA 12.5, so i run this ```pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121```)
 5. if find some error while loading the model, make sure to test your env supported GPU or not, by running the ```test.py``` first. Expected result :
    ```
    "CUDA Available: True"
