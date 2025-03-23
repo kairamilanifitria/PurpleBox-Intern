@@ -1,0 +1,12 @@
+numpy
+torch
+transformers
+supabase
+openai
+python-dotenv
+scipy
+nltk
+psycopg2
+# pip uninstall torch torchvision torchaudio
+# then do this:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
