@@ -38,9 +38,14 @@ Disable RLS -> Confirm```
    if you have GPU but its not detected, run ```nvidia-smi``` in the cmd first
 7. the code also can be run in the CPU
 
+![4_embedding_supabase](https://github.com/user-attachments/assets/d5ec6f04-6f01-4b80-8e4e-682a9718eed6)
+
+
 ## API running
 1. run by the API by activate the venv first, then ```python api.py```
 2. i made another file in ```api.py``` for integrating with fastapi without changing the ```main.py```
 3. don't forget to open http url in browser and add the ```{url}/docs``` to run the function method available
 
-![4_embedding_completed](https://github.com/user-attachments/assets/1cfc6a2d-bf82-4af5-9930-65dfe71918a1)
+![4_embedding_completed](https://github.com/user-attachments/assets/1cfc6a2d-bf82-4af5-9930-65dfe71918![Uploading 4_embedding_supabase.png…]()
+a1)
+
