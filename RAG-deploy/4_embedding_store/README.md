@@ -1,4 +1,6 @@
-# Supabase preparation:
+# Embedding
+
+## Supabase Prep:
 1. build a project
 2. enable ```vector``` type file by click ```Database -> Extensions -> search "vector"``` and enable the extensions
 3. make a table ```documents```, cheklist the ```Enable Row Level Security``` and set with a column :
@@ -23,7 +25,7 @@ description : text
 7. disable the RLS (Row Level Security) by clicking ```Add RLS policy -> 
 Disable RLS -> Confirm```
 
-# Run the code :
+# Run code in local:
 1. install the ```requirements.txt``` first in your environment
 2. fill the ```.env``` supabase url and the API key
 3. make sure the input and output folder in the same folder as code and other dependencies
@@ -35,3 +37,10 @@ Disable RLS -> Confirm```
    ```
    if you have GPU but its not detected, run ```nvidia-smi``` in the cmd first
 7. the code also can be run in the CPU
+
+## API running
+1. run by the API by activate the venv first, then ```python api.py```
+2. i made another file in ```api.py``` for integrating with fastapi without changing the ```main.py```
+3. don't forget to open http url in browser and add the ```{url}/docs``` to run the function method available
+
+![4_embedding_completed](https://github.com/user-attachments/assets/1cfc6a2d-bf82-4af5-9930-65dfe71918a1)
