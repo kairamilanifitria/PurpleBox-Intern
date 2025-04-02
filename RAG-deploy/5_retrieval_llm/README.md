@@ -7,3 +7,6 @@ To run:
 4. I add the ```exit```, ```quit```, and ```new chat``` commands for user.
    - ```exit``` or ```quit``` if you want to exit the conversation
    - ```new_chat``` if you want to send new query (with no previous history chat)
+
+## API integration :
+**in progress**
