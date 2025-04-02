@@ -46,6 +46,6 @@ Disable RLS -> Confirm```
 2. i made another file in ```api.py``` for integrating with fastapi without changing the ```main.py```
 3. don't forget to open http url in browser and add the ```{url}/docs``` to run the function method available
 
-![4_embedding_completed](https://github.com/user-attachments/assets/1cfc6a2d-bf82-4af5-9930-65dfe71918![Uploading 4_embedding_supabase.png…]()
-a1)
+![4_embedding_completed](https://github.com/user-attachments/assets/b634d070-73f4-4a3d-98f9-0ce62f2ff302)
+
 
